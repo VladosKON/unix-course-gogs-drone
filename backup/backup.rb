@@ -29,26 +29,6 @@ def warning(dir,backup,method)
   end
 end
 
-if __FILE__ == $0
-  options = {}
-  OptionParser.new do |opt|
-    opt.on('--dir dir') { |o| options[:dirpath] = o }
-    opt.on('--backup backup') { |o| options[:backuppath] = o }
-    opt.on('--method method') { |o| options[:method] = o }
-  end.parse!
-  if options.size != 3    
-    puts "Введите три параметра: (--dir=dir,--backup=backup,--method=zip/unzip)"
-    puts "dir - Путь до директории с папкой backup"
-    puts "backup - Путь до директории которая содержит(будет содержать) backup-архив"
-    puts "method - zip(заархивировать)/unzip(распаковать)"
-  exit(1)
-  end
-  puts options
-  warning(options[:dirpath],options[:backuppath],options[:method])
-  main(options[:dirpath],options[:backuppath],options[:method])
-end
-
-
 # Информацию про бэкап именованных volumes (В моем случае это `kanboard_data` и `drone-server-data`) нашел здесь 
 # https://medium.com/@loomchild/backup-restore-docker-named-volumes-350397b8e362
 
@@ -103,4 +83,23 @@ def main(dir,backup,method)
       main(dir,backup,method)
     end
   end
+end
+
+if __FILE__ == $0
+  options = {}
+  OptionParser.new do |opt|
+    opt.on('--dir dir') { |o| options[:dirpath] = o }
+    opt.on('--backup backup') { |o| options[:backuppath] = o }
+    opt.on('--method method') { |o| options[:method] = o }
+  end.parse!
+  if options.size != 3    
+    puts "Введите три параметра: (--dir=dir,--backup=backup,--method=zip/unzip)"
+    puts "dir - Путь до директории с папкой backup"
+    puts "backup - Путь до директории которая содержит(будет содержать) backup-архив"
+    puts "method - zip(заархивировать)/unzip(распаковать)"
+  exit(1)
+  end
+  puts options
+  warning(options[:dirpath],options[:backuppath],options[:method])
+  main(options[:dirpath],options[:backuppath],options[:method])
 end
