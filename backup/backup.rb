@@ -23,9 +23,7 @@ def main(dir,backup,method)
   if method == "zip"
     puts("Введите имя архива обязательно с расширением tar(пример: backup.tar)")
     name = gets.chomp
-    if(name=="exit")
-    exit(1)
-    end
+
     if !File.exist?(File.join(absolutebackup, name))
       checked_run('sudo','rm','-rf','/tmp/currentbackup/')
       checked_run('sudo','mkdir','/tmp/currentbackup/')
@@ -40,12 +38,11 @@ def main(dir,backup,method)
       puts "Такое имя уже есть, попробуйте снова"
       main(dir,backup,method)
     end
+
   elsif method == "unzip"
     puts("Введите имя архива обязательно с расширением tar для распаковки(пример: backup.tar)")
     name = gets.chomp
-    if(name=="exit")
-      exit(1)
-    end
+
     if File.exist?(File.join(absolutebackup, name))
       checked_run('sudo','rm','-rf', File.join(absolutedir,'gogs'))
       checked_run('sudo','rm','-rf',File.join(absolutedir,'drone'))
@@ -65,6 +62,7 @@ def main(dir,backup,method)
       puts("Архива не существует, попробуйте снова")
       main(dir,backup,method)
     end
+    
   end
 end
 
