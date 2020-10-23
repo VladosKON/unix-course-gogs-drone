@@ -1,32 +1,15 @@
 #!/usr/bin/env ruby
 require 'optparse'
 
-# Методы `checked_run`, `warning` и `if __FILE__` были найдены в старых лабораторных
+# Методы `checked_run` и `if __FILE__` были найдены в старых лабораторных
 
 def checked_run(*args, dir: nil)
   command = args.join(' ')
   if !dir.nil?
     command = "cd #{dir} && #{command}"
   end
-  puts "Command #{command}"
+  puts "Комманда: #{command}"
   system(command)    
-end
-
-def warning(dir,backup,method)
-  unless (method == "zip" || method == "unzip")   
-    puts "Введите метод zip или unzip"
-    exit(1)
-  end
-
-  unless (File.exist?(File.expand_path(dir)))
-    puts "Введите правильный путь до директории проекта"
-    exit(1)
-  end
-
-  unless (File.exist?(File.expand_path(backup)))
-    puts "Введите правильный путь для местоположения архива"
-    exit(1)
-  end
 end
 
 # Информацию про бэкап именованных volumes (В моем случае это `kanboard_data` и `drone-server-data`) нашел здесь 
@@ -38,7 +21,7 @@ def main(dir,backup,method)
   absolutebackup = File.expand_path(backup)
   
   if method == "zip"
-    puts("Введите имя создаваемого архива обязательно с расширением tar(пример backup.tar)")
+    puts("Введите имя архива обязательно с расширением tar(пример: backup.tar)")
     name = gets.chomp
     if(name=="exit")
     exit(1)
@@ -46,19 +29,19 @@ def main(dir,backup,method)
     if !File.exist?(File.join(absolutebackup, name))
       checked_run('sudo','rm','-rf','/tmp/currentbackup/')
       checked_run('sudo','mkdir','/tmp/currentbackup/')
-      checked_run('sudo','cp','-r',File.join(absolutedir,'gogs'), '/tmp/currentbackup/gogs/')
-      checked_run('sudo','cp','-r',File.join(absolutedir,'drone'),'/tmp/currentbackup/drone/') 
-      checked_run('sudo','cp','-r',File.join(absolutedir,'mysql'),'/tmp/currentbackup/mysql/') 
       checked_run('sudo','docker','run', '--rm', '-v', 'kanboard_data:/volume', '-v', '/tmp/currentbackup:/backup', 'alpine', 'tar', '-cjf', 'backup/kanboard_data.tar.bz2', '-C', '/volume', './' )
       checked_run('sudo','docker','run', '--rm', '-v', 'drone-server-data:/volume', '-v', '/tmp/currentbackup:/backup', 'alpine', 'tar', '-cjf', 'backup/drone-server-data.tar.bz2', '-C', '/volume', './' )
+      checked_run('sudo','cp','-r',File.join(absolutedir,'gogs'), '/tmp/currentbackup/gogs/')
+      checked_run('sudo','cp','-r',File.join(absolutedir,'drone'),'/tmp/currentbackup/drone/') 
+      checked_run('sudo','cp','-r',File.join(absolutedir,'mysql'),'/tmp/currentbackup/mysql/')      
       checked_run('sudo','tar','-cvf',File.join(absolutebackup,name),'/tmp/currentbackup/')
       checked_run('sudo','rm','-rf','/tmp/currentbackup')
     else
-      puts "Архив с таким именем существует, введите другое имя для создания нового архива"
+      puts "Такое имя уже есть, попробуйте снова"
       main(dir,backup,method)
     end
   elsif method == "unzip"
-    puts("Введите имя архива с расширением tar, который нужно распаковать(пример backup.tar)")
+    puts("Введите имя архива обязательно с расширением tar для распаковки(пример: backup.tar)")
     name = gets.chomp
     if(name=="exit")
       exit(1)
@@ -79,27 +62,37 @@ def main(dir,backup,method)
       checked_run('sudo','rm','-rf',File.join(absolutedir,'backup','tmp'))
       checked_run('sudo','rm','-rf','/tmp/currentbackup/')
     else
-      puts("Архива с введенным именем не существует, введите правильное имя")
+      puts("Архива не существует, попробуйте снова")
       main(dir,backup,method)
     end
   end
 end
 
 if __FILE__ == $0
-  options = {}
-  OptionParser.new do |opt|
-    opt.on('--dir dir') { |o| options[:dirpath] = o }
-    opt.on('--backup backup') { |o| options[:backuppath] = o }
-    opt.on('--method method') { |o| options[:method] = o }
+
+  hash_option = {}
+  OptionParser.new do |opts|
+    opts.banner = "Используйте: ruby backup.rb --dir=[projectDirectory] --backup=[backupDirectory] --method=[zip/unzip]"
+    opts.on('--dir [ProjectDir]') do |v| 
+      hash_option[:dirpath] = v 
+    end
+    opts.on('--backup [BackupDir]') do |v|
+      hash_option[:backuppath] = v
+    end
+    opts.on('--method [Method]') do |v| 
+      hash_option[:method] = v 
+    end
+    opts.on('--help', '-h') do 
+      puts opts
+      exit
+    end
   end.parse!
-  if options.size != 3    
-    puts "Введите три параметра: (--dir=dir,--backup=backup,--method=zip/unzip)"
-    puts "dir - Путь до директории с папкой backup"
-    puts "backup - Путь до директории которая содержит(будет содержать) backup-архив"
-    puts "method - zip(заархивировать)/unzip(распаковать)"
-  exit(1)
+
+  if hash_option[:dirpath].nil? && hash_option[:backuppath].nil? && hash_option[method].nil? && hash_option.size < 3
+    puts "Нужно три параметра (--dir=[projectDirectory], --backup=[backupDirectory], --method=[zip/unzip])"
+    exit(1)
   end
-  puts options
-  warning(options[:dirpath],options[:backuppath],options[:method])
-  main(options[:dirpath],options[:backuppath],options[:method])
+
+  puts hash_option
+  main(hash_option[:dirpath],hash_option[:backuppath],hash_option[:method])
 end
