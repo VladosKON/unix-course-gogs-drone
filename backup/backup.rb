@@ -35,7 +35,7 @@ def main(dir,backup,method)
       checked_run('sudo','tar','-cvf',File.join(absolutebackup,name),'/tmp/currentbackup/')
       checked_run('sudo','rm','-rf','/tmp/currentbackup')
     else
-      puts "Такое имя уже есть, попробуйте снова"
+      puts "Такой архив уже есть, попробуйте снова"
       main(dir,backup,method)
     end
 
@@ -62,7 +62,7 @@ def main(dir,backup,method)
       puts("Архива не существует, попробуйте снова")
       main(dir,backup,method)
     end
-    
+
   end
 end
 
